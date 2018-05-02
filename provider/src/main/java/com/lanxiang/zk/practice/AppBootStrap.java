@@ -2,6 +2,7 @@ package com.lanxiang.zk.practice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.ImportResource;
 
@@ -9,7 +10,7 @@ import org.springframework.context.annotation.ImportResource;
  * Created by lanxiang on 2018/5/2.
  */
 
-@SpringBootApplication
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 @ComponentScan(basePackages = "com.lanxiang.zk.practice")
 @ImportResource(locations = {"classpath:applicationContext.xml"})
 public class AppBootStrap {
