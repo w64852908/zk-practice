@@ -1,0 +1,22 @@
+/provider/target/generated-sources
+/provider/target/maven-status
+/service/src/main/resources/global_merged.properties
+/provider/logs
+# Created by .ignore support plugin (hsz.mobi)
+.idea
+/service/target/*
+/provider/target/*
+/domain/target/*
+/provider/src/main/resources/logback.xml
+/logs
+/provider/src/main/resources/config.properties
+/provider/src/main/resources/global_merged.properties
+/common/target/*
+/biz/target/*
+/common/target
+/task/target/*
+*.iml
+*.class
+/dao/target/
+/export/target/
+.DS_Store
