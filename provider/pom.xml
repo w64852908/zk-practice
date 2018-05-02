@@ -11,6 +11,12 @@
 
     <artifactId>zk-practice.provider</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.lanxiang</groupId>
+            <artifactId>zk-practice.common</artifactId>
+        </dependency>
+    </dependencies>
 
     <build>
         <finalName>${project.artifactId}-release-${project.version}</finalName>
