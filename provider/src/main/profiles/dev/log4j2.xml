@@ -42,18 +42,9 @@
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
             </Policies>
         </RollingRandomAccessFile>
-
-        <!-- crane专有配置 -->
-        <CraneAppender name="Crane"/>
     </Appenders>
 
     <Loggers>
-
-        <logger name="com.maoyan.gateway" level="info">
-            <appender-ref ref="infoLog"/>
-            <appender-ref ref="warnLog"/>
-            <appender-ref ref="errorLog"/>
-        </logger>
 
         <!--  第三方的软件日志级别 -->
         <logger name="org.springframework" level="info" additivity="false">
@@ -62,31 +53,12 @@
             <appender-ref ref="errorLog"/>
             <AppenderRef ref="Console"/>
         </logger>
-        <logger name="com.meituan.service.mobile.mtthrift.client.cluster.DynamicAgentCluster" level="warn"
-                additivity="false">
-            <appender-ref ref="warnLog"/>
-            <appender-ref ref="errorLog"/>
-        </logger>
-
-        <!-- 应用的日志级别  -->
-        <logger name="com.maoyan.service" level="info" additivity="false">
-            <appender-ref ref="infoLog"/>
-            <appender-ref ref="warnLog"/>
-            <appender-ref ref="errorLog"/>
-            <AppenderRef ref="Console"/>
-
-            <!-- crane专有配置 -->
-            <AppenderRef ref="Crane"/>
-        </logger>
 
         <!-- 剩余其他的日志级别 -->
         <Root level="warn" includeLocation="true">
             <AppenderRef ref="warnLog"/>
             <AppenderRef ref="errorLog"/>
             <AppenderRef ref="Console"/>
-
-            <!-- crane专有配置 -->
-            <AppenderRef ref="Crane"/>
         </Root>
 
 
