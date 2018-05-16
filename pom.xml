@@ -34,6 +34,11 @@
                 <artifactId>zk-practice.domain</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.lanxiang</groupId>
+                <artifactId>zk-practice.service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- logger -->
             <dependency>
@@ -345,6 +350,7 @@
         <module>common</module>
         <module>provider</module>
         <module>domain</module>
+        <module>service</module>
     </modules>
 
 

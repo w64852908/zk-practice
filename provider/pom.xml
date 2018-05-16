@@ -15,7 +15,7 @@
     <dependencies>
         <dependency>
             <groupId>com.lanxiang</groupId>
-            <artifactId>zk-practice.common</artifactId>
+            <artifactId>zk-practice.service</artifactId>
         </dependency>
     </dependencies>
 
