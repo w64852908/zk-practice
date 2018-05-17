@@ -14,7 +14,7 @@ public class ConnnectionWatcher implements Watcher {
 
     private static final int SESSION_TIMEOUT = 5000;
 
-    protected ZooKeeper zk = null;
+    private ZooKeeper zk = null;
 
     private CountDownLatch latch = new CountDownLatch(1);
 
