@@ -21,11 +21,11 @@ public class ZkUtilTest {
 
     @Test
     public void showAllNodes() throws Exception {
-        System.out.println(ZkUtilCopy.listSubTreeBFS(zk, "/"));
+        System.out.println(ZkUtilCopy.listSubTreeBFS(zk, "/lanxiang"));
     }
 
     @Test
     public void deleteAllNodes() throws Exception {
-        ZkUtilCopy.deleteRecursive(zk, "/home");
+        ZkUtilCopy.deleteRecursive(zk, "/com.lanxiang.zk.practice");
     }
 }
