@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.zookeeper.CreateMode;
 import org.reflections.Reflections;
@@ -18,7 +19,6 @@ import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSON;
 import com.lanxiang.zk.practice.common.exception.PracticeException;
 import com.lanxiang.zk.practice.service.annotation.ZkConfig;
 import com.lanxiang.zk.practice.service.common.ZkConnection;
@@ -126,35 +126,22 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
                 cacheConfig.getConfig().put(keyPath, nodeData);
             }
             addToListenerMap(keyPath, zkConfig, field, nodeData);
-            final PathChildrenCache childrenCache;
-            if (pathChildrenCacheMap.containsKey(clientIdPath)) {
-                childrenCache = pathChildrenCacheMap.get(clientIdPath);
-            } else {
-                childrenCache = new PathChildrenCache(curator, clientIdPath, true);
-                try {
-                    childrenCache.start();
-                } catch (Exception e) {
-                    throw new PracticeException("init zk config node listener failed.");
-                }
-                pathChildrenCacheMap.put(clientIdPath, childrenCache);
-            }
-            childrenCache.getListenable().addListener((client, event) -> {
-                LOGGER.info("received event : {}", JSON.toJSONString(event));
-                switch (event.getType()) {
-                    case CHILD_ADDED:
-                        String initValue = new String(event.getData().getData());
-                        listenerMap.get(keyPath).changed(key, "", initValue);
-                        cacheConfig.getConfig().put(keyPath, initValue);
-                        cacheConfig.setVersion(cacheConfig.getVersion() + 1);
-                        break;
-                    case CHILD_UPDATED:
+            final NodeCache nodeCache = new NodeCache(curator, keyPath);
+            try {
+                nodeCache.start(true);
+            } catch (Exception e) {
+                throw new PracticeException("init zk config node listener failed.");
 
-                        String oldValue = cacheConfig.getConfig().get(keyPath);
-                        String newValue = new String(event.getData().getData());
-                        listenerMap.get(keyPath).changed(key, oldValue, newValue);
-                        cacheConfig.getConfig().put(keyPath, newValue);
-                        cacheConfig.setVersion(cacheConfig.getVersion() + 1);
-                        break;
+            }
+            nodeCache.getListenable().addListener(() -> {
+                if (null != nodeCache.getCurrentData() && null != nodeCache.getCurrentData().getData()) {
+                    String listenerKey = nodeCache.getCurrentData().getPath();
+                    String annotatedKey = listenerKey.substring(listenerKey.lastIndexOf("/") + 1);
+                    String oldValue = cacheConfig.getConfig().get(listenerKey);
+                    String newValue = new String(nodeCache.getCurrentData().getData());
+                    listenerMap.get(listenerKey).changed(annotatedKey, oldValue, newValue);
+                    cacheConfig.getConfig().put(listenerKey, newValue);
+                    cacheConfig.setVersion(cacheConfig.getVersion() + 1);
                 }
             });
         }

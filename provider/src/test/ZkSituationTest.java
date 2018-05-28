@@ -23,11 +23,20 @@ public class ZkSituationTest extends AbstractTest {
 
     @Test
     public void testZkcc() throws Exception {
+        Thread.sleep(1000L);
         System.out.println(LanxiangConfig.getName());
         System.out.println(LanxiangConfig.getAge());
-        updateNameAndAge("liju", "88");
+        updateNameAndAge("liju", "24");
+        Thread.sleep(1000L);
         System.out.println(LanxiangConfig.getName());
         System.out.println(LanxiangConfig.getAge());
+        updateNameAndAge("bamei", "25");
+        Thread.sleep(1000L);
+        System.out.println(LanxiangConfig.getName());
+        System.out.println(LanxiangConfig.getAge());
+        while (true) {
+
+        }
     }
 
     private void updateNameAndAge(String name, String age) throws Exception {

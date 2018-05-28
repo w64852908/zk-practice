@@ -57,7 +57,7 @@
         <!-- 应用的日志级别  -->
         <logger name="com.lanxiang.zk.practice" level="info" additivity="false">
             <appender-ref ref="infoLog"/>
-            <appender-ref ref="warnLog"/>
+            <!--<appender-ref ref="warnLog"/>-->
             <appender-ref ref="errorLog"/>
             <AppenderRef ref="Console"/>
         </logger>

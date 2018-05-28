@@ -32,7 +32,7 @@ public class ConfigChangeListener implements IConfigChangeListener {
                     if (key.equals(zkConfig.key())) {
                         field.setAccessible(true);
                         field.set(clazz, FieldValueTransUtil.transferValue(field, newValue));
-                        LOGGER.info(clazz.getName() + "." + field.getName() + "updated, {} -> {}", oldValue, newValue);
+                        LOGGER.info("config listener : [" + clazz.getSimpleName() + "." + field.getName() + "] updated, {} -> {}", oldValue, newValue);
                     }
                 }
             } catch (Exception e) {
