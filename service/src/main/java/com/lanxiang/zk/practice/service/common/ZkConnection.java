@@ -24,7 +24,7 @@ public class ZkConnection {
 
     private int connectionTimeout = 3000;
 
-    private RetryPolicy retryPolicy = new RetryForever(30000);
+    private RetryPolicy retryPolicy = new RetryForever(5000);
 
     public ZkConnection(String connectString) {
         this.connectString = connectString;

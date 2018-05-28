@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.zookeeper.CreateMode;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
@@ -106,11 +107,20 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
             }
             String clientIdPath = path + nodeName + "/" + clientId;
             String keyPath = clientIdPath + "/" + key;
+
+            boolean isNodeExist;
             String nodeData = null;
             try {
-                nodeData = new String(curator.getData().forPath(keyPath));
+                isNodeExist = null != curator.checkExists().forPath(keyPath);
+                if (isNodeExist) {
+                    nodeData = new String(curator.getData().forPath(keyPath));
+                } else {
+                    curator.create().creatingParentsIfNeeded()
+                            .withMode(CreateMode.EPHEMERAL)
+                            .forPath(keyPath);
+                }
             } catch (Exception e) {
-                LOGGER.error("get data from zk failed, path : {}, cause : {}", keyPath, e);
+                LOGGER.error("check node stat and create if not exist error : {}", e);
             }
             if (StringUtils.isNotBlank(nodeData)) {
                 cacheConfig.getConfig().put(keyPath, nodeData);
@@ -138,14 +148,12 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
                         cacheConfig.setVersion(cacheConfig.getVersion() + 1);
                         break;
                     case CHILD_UPDATED:
+
                         String oldValue = cacheConfig.getConfig().get(keyPath);
                         String newValue = new String(event.getData().getData());
                         listenerMap.get(keyPath).changed(key, oldValue, newValue);
                         cacheConfig.getConfig().put(keyPath, newValue);
                         cacheConfig.setVersion(cacheConfig.getVersion() + 1);
-                        break;
-                    default:
-                        LOGGER.info("233333333333333333333");
                         break;
                 }
             });
