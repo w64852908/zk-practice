@@ -28,5 +28,3 @@ jetty:
 #        dbc_connectionInitSqls: SET NAMES utf8mb4
 #mybatis:
 #    configLocation: classpath:/mybatis-config.xml
-zookeeper:
-  host:
