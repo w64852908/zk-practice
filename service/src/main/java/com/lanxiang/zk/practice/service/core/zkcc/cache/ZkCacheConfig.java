@@ -6,6 +6,10 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Created by lanxiang on 2018/5/27.
  */
+
+/**
+ * 本地缓存，记录每次配置信息发生的变更以及数据
+ */
 public class ZkCacheConfig implements Serializable {
 
     private String nodeName;

@@ -1,4 +1,7 @@
+import java.util.concurrent.TimeUnit;
+
 import org.apache.curator.framework.CuratorFramework;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,8 +24,17 @@ public class ZkSituationTest extends AbstractTest {
         curator.setData().forPath("/lanxiangZkPractice/lanxiangZkConfig/lanxiang.age", "25".getBytes());
     }
 
+    @After
+    public void destroy() throws Exception {
+        TimeUnit.MINUTES.sleep(1);
+    }
+
+    /**
+     * 测试zk配置中心逻辑
+     */
     @Test
     public void testZkcc() throws Exception {
+        //主线程sleep，等待NodeCacheListener和IConfigChangeListener更新
         Thread.sleep(1000L);
         System.out.println(LanxiangConfig.getName());
         System.out.println(LanxiangConfig.getAge());
@@ -34,9 +46,6 @@ public class ZkSituationTest extends AbstractTest {
         Thread.sleep(1000L);
         System.out.println(LanxiangConfig.getName());
         System.out.println(LanxiangConfig.getAge());
-        while (true) {
-
-        }
     }
 
     private void updateNameAndAge(String name, String age) throws Exception {

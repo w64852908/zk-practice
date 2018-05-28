@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.NodeCache;
-import org.apache.curator.framework.recipes.cache.PathChildrenCache;
 import org.apache.zookeeper.CreateMode;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
@@ -48,13 +47,14 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
     //zk的host
     private String connectString;
 
+    //缓存client的当前配置数据
     private ZkCacheConfig cacheConfig;
 
+    /**
+     * key->zk配置信息节点的path value->该节点对应的ConfigChangeListener
+     * 节点path和成员属性监听器映射
+     */
     private Map<String, IConfigChangeListener> listenerMap = new HashMap<>();
-
-    //key clientId value 对应的子节点监听者
-    private Map<String, PathChildrenCache> pathChildrenCacheMap = new HashMap<>();
-
 
     @Override
     public void init() {
@@ -64,6 +64,7 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
         if (StringUtils.isBlank(connectString)) {
             throw new IllegalArgumentException("zk host 为空");
         }
+        //初始化client缓存
         initCacheConfig();
         //扫描对应basePackage下所有的动态配置项，并监听其节点并初始化
         scanConfigAnnotationsAndRegisterNodes();
@@ -78,22 +79,25 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
     }
 
     private void scanConfigAnnotationsAndRegisterNodes() {
+        //扫描scanBasePackage下所有类的带有ZkConfig注解的成员属性
         Reflections reflections = new Reflections(new ConfigurationBuilder()
                 .setUrls(ClasspathHelper.forPackage(scanBasePackage))
                 .setScanners(new FieldAnnotationsScanner()));
-
         Set<Field> fields = reflections.getFieldsAnnotatedWith(ZkConfig.class);
+        //记录配置client时的key，防止重复配置项
         Set<String> configKeySet = new HashSet<>();
+        //连接zk，初始化curator
         ZkConnection connection = new ZkConnection(connectString, appkey);
         CuratorFramework curator = connection.connect();
-        curator.start();
         //key clientId value 对应的子节点监听者
         for (Field field : fields) {
             if (!field.isAnnotationPresent(ZkConfig.class)) {
                 continue;
             }
+
             ZkConfig zkConfig = field.getAnnotation(ZkConfig.class);
 
+            //ZkConfig注解上key和clientId的内容
             String key = zkConfig.key();
             String clientId = zkConfig.clientId();
             if (StringUtils.isBlank(key) || StringUtils.isBlank(clientId)) {
@@ -105,9 +109,11 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
             } else {
                 configKeySet.add(key);
             }
-            String clientIdPath = path + nodeName + "/" + clientId;
-            String keyPath = clientIdPath + "/" + key;
 
+            //拼出该field在zk上节点的绝对路径
+            String keyPath = path + nodeName + "/" + clientId + "/" + key;
+
+            //如果该节点已存在，则放进cacheConfig，如果不存在则创建zk上的临时节点
             boolean isNodeExist;
             String nodeData = null;
             try {
@@ -125,7 +131,10 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
             if (StringUtils.isNotBlank(nodeData)) {
                 cacheConfig.getConfig().put(keyPath, nodeData);
             }
+            //给成员属性初始化值，并创建其监听器
             addToListenerMap(keyPath, zkConfig, field, nodeData);
+
+            //创建zk上该节点缓存
             final NodeCache nodeCache = new NodeCache(curator, keyPath);
             try {
                 nodeCache.start(true);
@@ -133,13 +142,27 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
                 throw new PracticeException("init zk config node listener failed.");
 
             }
+
+            //添加节点更新事件的监听器
             nodeCache.getListenable().addListener(() -> {
+                //当节点更新后的data不为空时，才更新本地配置
                 if (null != nodeCache.getCurrentData() && null != nodeCache.getCurrentData().getData()) {
+                    //获取更新节点的绝对路径，对应cacheConfig中缓存的key和ZkConfig注解成员属性监听器映射的key
                     String listenerKey = nodeCache.getCurrentData().getPath();
+                    /**
+                     *
+                     * ZkConfig注解的key，对应zk节点的最后一级相对路径↓↓↓
+                     * path + nodeName + "/" + clientId + "/" + key;
+                     * String key = zkConfig.key();
+                     */
                     String annotatedKey = listenerKey.substring(listenerKey.lastIndexOf("/") + 1);
+                    //从本地缓存中取出更新前的值
                     String oldValue = cacheConfig.getConfig().get(listenerKey);
+                    //节点当前值
                     String newValue = new String(nodeCache.getCurrentData().getData());
+                    //更新成员属性的值
                     listenerMap.get(listenerKey).changed(annotatedKey, oldValue, newValue);
+                    //更新本地缓存中的值和version版本号
                     cacheConfig.getConfig().put(listenerKey, newValue);
                     cacheConfig.setVersion(cacheConfig.getVersion() + 1);
                 }

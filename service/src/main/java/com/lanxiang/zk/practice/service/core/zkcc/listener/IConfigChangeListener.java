@@ -5,9 +5,6 @@ package com.lanxiang.zk.practice.service.core.zkcc.listener;
  */
 public interface IConfigChangeListener {
 
-    /**
-     * 配置发生变更时
-     */
     void changed(String key, String oldValue, String newValue);
 
 }
