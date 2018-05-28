@@ -89,6 +89,7 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
         //连接zk，初始化curator
         ZkConnection connection = new ZkConnection(connectString, appkey);
         CuratorFramework curator = connection.connect();
+        curator.start();
         //key clientId value 对应的子节点监听者
         for (Field field : fields) {
             if (!field.isAnnotationPresent(ZkConfig.class)) {
