@@ -12,22 +12,13 @@ public interface ZkConfigClientInvoker {
 
     void init();
 
-    void destroy();
-
-    void addListener(String key, IConfigChangeListener listener);
-
     String getValue(String key);
 
     Map<String, String> getAllKeyValues();
 
     Set<String> getAllKeys();
 
-    Boolean setValue(String key, String value);
-
-    void setPullPeriod(long pullPeriod);
+    boolean setValue(String key, String value);
 
     void setScanBasePackage(String scanBasePackage);
-
-    void setId(String id);
-
 }

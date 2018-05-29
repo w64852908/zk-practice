@@ -47,6 +47,9 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
     //zk的host
     private String connectString;
 
+    //zk的curator客户端
+    private CuratorFramework curator;
+
     //缓存client的当前配置数据
     private ZkCacheConfig cacheConfig;
 
@@ -87,8 +90,8 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
         //记录配置client时的key，防止重复配置项
         Set<String> configKeySet = new HashSet<>();
         //连接zk，初始化curator
-        ZkConnection connection = new ZkConnection(connectString, appkey);
-        CuratorFramework curator = connection.connect();
+        ZkConnection zkConnection = new ZkConnection(connectString, appkey);
+        curator = zkConnection.connect();
         curator.start();
         //key clientId value 对应的子节点监听者
         for (Field field : fields) {
@@ -184,47 +187,48 @@ public class ZkConfigClient implements ZkConfigClientInvoker {
     }
 
     @Override
-    public void destroy() {
-
-    }
-
-    @Override
-    public void addListener(String key, IConfigChangeListener listener) {
-
-    }
-
-    @Override
     public String getValue(String key) {
-        return null;
+        return cacheConfig.getConfig().get(key);
     }
 
     @Override
     public Map<String, String> getAllKeyValues() {
-        return null;
+        Map<String, String> result = new HashMap<>();
+        result.putAll(cacheConfig.getConfig());
+        return result;
     }
 
     @Override
     public Set<String> getAllKeys() {
-        return null;
+        return cacheConfig.getConfig().keySet();
     }
 
     @Override
-    public Boolean setValue(String key, String value) {
-        return null;
-    }
-
-    @Override
-    public void setPullPeriod(long pullPeriod) {
-
+    public boolean setValue(String key, String value) {
+        if (StringUtils.isBlank(key) || StringUtils.isBlank(value)) {
+            return false;
+        }
+        String zkPath = null;
+        for (String cacheKey : cacheConfig.getConfig().keySet()) {
+            if (cacheKey.substring(cacheKey.lastIndexOf("/") + 1).equals(key)) {
+                zkPath = cacheKey;
+                break;
+            }
+        }
+        if (StringUtils.isBlank(zkPath)) {
+            return false;
+        }
+        try {
+            curator.setData().forPath(zkPath, value.getBytes());
+        } catch (Exception e) {
+            LOGGER.error("update value on zkcc failed, {}", e);
+            return false;
+        }
+        return true;
     }
 
     public void setScanBasePackage(String scanBasePackage) {
         this.scanBasePackage = scanBasePackage;
-    }
-
-    @Override
-    public void setId(String id) {
-
     }
 
     public String getPath() {

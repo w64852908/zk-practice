@@ -14,6 +14,7 @@ public class ZkCacheConfig implements Serializable {
 
     private String nodeName;
 
+    //key->zk节点的绝对路径 value->节点上的数据
     private ConcurrentMap<String, String> config;
 
     private Long version;

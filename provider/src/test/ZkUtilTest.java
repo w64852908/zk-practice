@@ -21,7 +21,7 @@ public class ZkUtilTest {
 
     @Test
     public void showAllNodes() throws Exception {
-        System.out.println(ZkUtilCopy.listSubTreeBFS(zk, "/lanxiang"));
+        System.out.println(ZkUtilCopy.listSubTreeBFS(zk, "/"));
     }
 
     @Test
