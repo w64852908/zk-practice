@@ -26,6 +26,6 @@ public class ZkUtilTest {
 
     @Test
     public void deleteAllNodes() throws Exception {
-        ZkUtilCopy.deleteRecursive(zk, "/com.lanxiang.zk.practice");
+        ZkUtilCopy.deleteRecursive(zk, "/zk-practice.guidgenerator/guid");
     }
 }

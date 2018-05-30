@@ -1,6 +1,7 @@
 import java.util.concurrent.TimeUnit;
 
 import com.lanxiang.zk.practice.service.annotation.ZkConfig;
+import com.lanxiang.zk.practice.service.core.nameservice.GUIDGenerator;
 import com.lanxiang.zk.practice.service.core.zkcc.ZkConfigClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.After;
@@ -74,5 +75,19 @@ public class ZkSituationTest extends AbstractTest implements ApplicationContextA
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
+    }
+
+    @Test
+    public void testGUID() {
+        GUIDGenerator generator = applicationContext.getBean(GUIDGenerator.class);
+        String node = "orderId";
+        for (int i = 0; i < 5; i++) {
+            new Thread(() -> {
+                for (int j = 0; j < 5; j++) {
+                    String uuid = generator.generate(node);
+                    System.out.println(Thread.currentThread().getName() + " get guid : " + uuid + ", at " + System.currentTimeMillis());
+                }
+            }).start();
+        }
     }
 }
