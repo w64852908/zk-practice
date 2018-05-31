@@ -9,21 +9,138 @@
   * 集群中各机器共享，配置一致  
   
 ###1.1 使用ZK实现配置中心
-TODO 要不要放代码？
+
+1.注解方式来配置 ZkConfig.java
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.FIELD)
+	public @interface ZkConfig {
+	
+	    //ZkConfigClient的唯一标识
+	    String clientId();
+	
+	    //配置项的key
+	    String key();
+	}
+	
+2.具体的配置类 LanxiangConfig.java
+
+	public class LanxiangConfig {
+	
+	    @ZkConfig(clientId = "lanxiangZkConfig", key = "lanxiang.name")
+	    private static String name;
+	
+	    @ZkConfig(clientId = "lanxiangZkConfig", key = "lanxiang.age")
+	    private static Integer age;
+	
+	    public static String getName() {
+	        return name;
+	    }
+	
+	    public static Integer getAge() {
+	        return age;
+	    }
+	}
 
 
-java中变量的存储位置.成员方法中的局部变量,存储在内存栈(stack)区,而且,局部变量不允许有任何修饰符. 成员变量的类型又分为静态和非静态的变量.静态成员变量不属于任何对象,它被该类的所有对象所共享.   
+###Java中的静态成员变量不属于任何对象,它被该类的所有对象所共享。
 
-####1.1.1 
-###1.2 使用ZK做配置中心的一些缺点
-MCC 2.0实现
+3.配置发生变化时，负责更新静态成员变量
+
+	private Class<?> clazz;
+
+    public ConfigChangeListener(Class<?> clazz) {
+        this.clazz = clazz;
+    }
+
+    @Override
+    public void changed(String key, String oldValue, String newValue) {
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            try {
+                if (field.isAnnotationPresent(ZkConfig.class)) {
+                    ZkConfig zkConfig = field.getAnnotation(ZkConfig.class);
+                    //只有发生变更的key和注解上标注的key()相等时，才更新其值
+                    if (key.equals(zkConfig.key())) {
+                        field.setAccessible(true);
+                        field.set(clazz, transferValue(field, newValue));
+                        LOGGER.info("config listener : [" + clazz.getSimpleName() + "." + field.getName() + "] updated, [{}] -> [{}]", oldValue, newValue);
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.info("update config value failed, cause : {}", e);
+            }
+        }
+    }
+    
+4.初始化配置中心客户端时，监听所有配置项节点
+
+    //创建zk上该节点缓存
+    final NodeCache nodeCache = new NodeCache(curator, keyPath);
+    try {
+        nodeCache.start(true);
+    } catch (Exception e) {
+        throw new PracticeException("init zk config node listener failed.");
+
+    }
+
+    //添加节点更新事件的监听器
+    nodeCache.getListenable().addListener(() -> {
+        //当节点更新后的data不为空时，才更新本地配置
+        if (null != nodeCache.getCurrentData() && null != nodeCache.getCurrentData().getData()) {
+        //获取更新节点的绝对路径，对应cacheConfig中缓存的key和ZkConfig注解成员属性监听器映射的key
+        String listenerKey = nodeCache.getCurrentData().getPath();
+        /**
+         *
+         * ZkConfig注解的key，对应zk节点的最后一级相对路径↓↓↓
+         * path + nodeName + "/" + clientId + "/" + key;
+         * String key = zkConfig.key();
+         */
+        String annotatedKey = listenerKey.substring(listenerKey.lastIndexOf("/") + 1);
+        //从本地缓存中取出更新前的值
+        String oldValue = cacheConfig.getConfig().get(listenerKey);
+        //节点当前值
+        String newValue = new String(nodeCache.getCurrentData().getData());
+        //更新成员属性的值
+        listenerMap.get(listenerKey).changed(annotatedKey, oldValue, newValue);
+        //更新本地缓存中的值和version版本号
+        cacheConfig.getConfig().put(listenerKey, newValue);
+        cacheConfig.setVersion(cacheConfig.getVersion() + 1);
+        }
+    });
+
+###1.2 MCC了解一下
+####1.2.1 MCC v1
+此版本配置中心的实现就是以上方式，这种方式的缺点有：  
+1. 强依赖zk，zk故障时会存在无法修改配置或者服务无法发布的问题  
+2. 隔离性差
+####1.2.2 MCC v2
+实现方式：客户端起一个ScheduledExecutorService，定期从sgAgent拉取配置数据
+
+#此处应有代码
+
+sgAgent和MCC server交互方式可以自行了解一下
 
 ##2.软负载均衡
 　　分布式系统中常见的一种技术，为了保证系统的高可用性，通常采用副本的方式来对服务进行部署，而对于服务消费者而言，只需要在这些服务提供方中选择一个来执行相关的业务逻辑。
-###2.1 appenv和跳板机
-　　mt开发环境的appenv配置项和登陆跳板机后，ssh到对应机器，是否是存储了机器别名和ip之间的映射关系
+###2.1 appenv
+1.本机配置的appenv
+
+	➜  ~ cat /data/webapps/appenv
+	deployenv=dev
+	zkserver=dev.lion.dp:2181
+	
+从本机连接zkserver可以看一下
+
+	zookeeper sync conntected.
+	WARN [00:54:39.876][main-SendThread(set-gh-inf-zookeeper-lion-test04.corp.sankuai.com:2181)][org.apache.zookeeper.ClientCnxn$SendThread][1111]:Client session timed out, have not heard from server in 3333ms for sessionid 0x1628ac18fa44533
+	
+	org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /DP/CONFIG
+
 ###2.2 服务消费者到服务提供者的软负载均衡
-TODO 客户端通过zk拉取服务器列表
+　　基本原理是，每个应用的Server启动时创建一个EPHEMERAL节点，应用客户端通过读取节点列表获得可用服务器列表，并订阅节点事件，有Server宕机断开时触发事件，客户端监测到后把该Server从可用列表中删除。  
+[参考：https://blog.csdn.net/autfish/article/details/51576695](https://blog.csdn.net/autfish/article/details/51576695)
+
 
 ##3.命名服务
 　　命名服务也是分布式系统中比较常见的场景，命名服务就是提供名称的服务，Zookeeper的命名服务有两个应用方面。

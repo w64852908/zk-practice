@@ -1,3 +1,4 @@
+import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.lanxiang.zk.practice.service.warmup.ConnnectionWatcher;
@@ -23,5 +24,24 @@ public class LocalTest {
         CuratorConnection curator = new CuratorConnection();
         curator.connection(LOCAL_HOST);
         curator.createNode();
+    }
+
+    @Test
+    public void test1() {
+        int start = 20180320;
+        int end = 20181220;
+        int[] arr = new int[20181220 - 20180320];
+        for (int i = start; i < end; i++) {
+            arr[i - start] = i;
+        }
+
+        String format = "yyyyMMdd";
+        DateTime today = new DateTime();
+
+        while (true) {
+            int index = Integer.valueOf(today.toString(format)) - start;
+            System.out.println(arr[index]);
+            today = today.plusDays(1);
+        }
     }
 }

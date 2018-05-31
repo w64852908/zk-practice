@@ -1,20 +1,18 @@
 import java.util.concurrent.TimeUnit;
 
-import com.lanxiang.zk.practice.service.annotation.ZkConfig;
-import com.lanxiang.zk.practice.service.core.nameservice.GUIDGenerator;
-import com.lanxiang.zk.practice.service.core.zkcc.ZkConfigClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.lanxiang.zk.practice.service.common.ZkConnection;
-import com.lanxiang.zk.practice.service.executetest.zkconfig.LanxiangConfig;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import javax.annotation.Resource;
+import com.lanxiang.zk.practice.service.annotation.ZkConfig;
+import com.lanxiang.zk.practice.service.common.ZkConnection;
+import com.lanxiang.zk.practice.service.core.nameservice.GUIDGenerator;
+import com.lanxiang.zk.practice.service.core.zkcc.ZkConfigClient;
+import com.lanxiang.zk.practice.service.executetest.zkconfig.LanxiangConfig;
 
 /**
  * Created by lanxiang on 2018/5/27.

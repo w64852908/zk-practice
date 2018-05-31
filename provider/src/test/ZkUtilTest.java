@@ -10,12 +10,14 @@ import com.lanxiang.zk.practice.service.warmup.ConnnectionWatcher;
  */
 public class ZkUtilTest {
 
-    private static final String LOCAL_HOST = "127.0.0.1:2181";
+    private static final String LOCAL_HOST = "dev.lion.dp:2181";
 
     private ZooKeeper zk;
 
     @Before
     public void init() throws Exception {
+        //更新读取zk节点数据包的大小限制
+        System.setProperty("jute.maxbuffer", "10295046");
         zk = new ZooKeeper(LOCAL_HOST, 5000, new ConnnectionWatcher());
     }
 
