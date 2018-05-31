@@ -10,7 +10,9 @@ import com.lanxiang.zk.practice.service.warmup.ConnnectionWatcher;
  */
 public class ZkUtilTest {
 
-    private static final String LOCAL_HOST = "dev.lion.dp:2181";
+//    private static final String LOCAL_HOST = "dev.lion.dp:2181";
+
+    private static final String LOCAL_HOST = "127.0.0.1:2181";
 
     private ZooKeeper zk;
 

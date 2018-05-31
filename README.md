@@ -121,7 +121,7 @@
 
 sgAgent和MCC server交互方式可以自行了解一下
 
-##2.软负载均衡
+##2.负载均衡
 　　分布式系统中常见的一种技术，为了保证系统的高可用性，通常采用副本的方式来对服务进行部署，而对于服务消费者而言，只需要在这些服务提供方中选择一个来执行相关的业务逻辑。
 ###2.1 appenv
 1.本机配置的appenv
@@ -137,7 +137,7 @@ sgAgent和MCC server交互方式可以自行了解一下
 	
 	org.apache.zookeeper.KeeperException$ConnectionLossException: KeeperErrorCode = ConnectionLoss for /DP/CONFIG
 
-###2.2 服务消费者到服务提供者的软负载均衡
+###2.2 软负载均衡
 　　基本原理是，每个应用的Server启动时创建一个EPHEMERAL节点，应用客户端通过读取节点列表获得可用服务器列表，并订阅节点事件，有Server宕机断开时触发事件，客户端监测到后把该Server从可用列表中删除。  
 [参考：https://blog.csdn.net/autfish/article/details/51576695](https://blog.csdn.net/autfish/article/details/51576695)
 
@@ -184,10 +184,11 @@ sgAgent和MCC server交互方式可以自行了解一下
     }
 ##4.分布式锁
 ###4.1 排他锁
-![排他锁流程图](./pic/exclusive_lock.jpg)
+![排他锁流程图](./pic/exclusive_lock_flow.jpg)
 ###4.2 共享锁
-TODO 放一张共享锁的截图
-![排他锁流程图](./pic/share_lock.jpg)
+![共享锁](./pic/share_lock.png)
+共享锁流程图
+![排他锁流程图](./pic/share_lock_flow.jpg)
 ###4.3 羊群效应以及改进后的共享锁
 　　在一个客户端移除自己的共享锁后，会发生以下两件事：  
 　　1. Zookeeper会发送锁节点的子节点变更WatcheEvent通知给所有要获取锁客户端（产生大量的watcher通知）  
